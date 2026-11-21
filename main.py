@@ -70,7 +70,18 @@ def main():
     os.makedirs(OUT_DIR, exist_ok=True)
     shutil.copyfile(SRC, OUT)
     done = os.path.getsize(OUT)
-    print("wrote %s (%dx%d, %d bytes)" % (OUT, width, height, done))
+    # Verify the file that actually landed, not just the source: a
+    # partial or corrupted copy must never pass the gate silently.
+    out_w, out_h = jpeg_size(OUT)
+    if (out_w, out_h) != (WANT_W, WANT_H):
+        print("output is %dx%d, want %dx%d"
+              % (out_w, out_h, WANT_W, WANT_H), file=sys.stderr)
+        return 1
+    if done > MAX_BYTES:
+        print("output is %d bytes, over the 1 MiB gate" % done,
+              file=sys.stderr)
+        return 1
+    print("wrote %s (%dx%d, %d bytes)" % (OUT, out_w, out_h, done))
     return 0
 
 
